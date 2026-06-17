@@ -1,0 +1,95 @@
+services:
+  # ── MySQL 8.0 ──────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: yyw_mysql
+    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: yiyunwen
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    # 强制 utf8mb4，中文不会乱码
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - yyw_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis 7 ────────────────────────────────────────
+  redis:
+    image: redis:7.2-alpine
+    container_name: yyw_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    # 60秒内有1次写操作就持久化，开发环境够用
+    command: redis-server --save 60 1 --loglevel warning
+    networks:
+      - yyw_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── RabbitMQ 3.12（带管理界面）────────────────────
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: yyw_rabbitmq
+    env_file: .env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    ports:
+      - "5672:5672"    # FastAPI 连这个端口发消息
+      - "15672:15672"  # 浏览器管理后台，答辩时可以展示
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - yyw_net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── Elasticsearch 8 ────────────────────────────────
+  elasticsearch:
+    image: elasticsearch:8.13.4
+    container_name: yyw_es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false   # 开发环境关掉认证，省事
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m # 限制内存，否则默认吃 4G
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - yyw_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+# 所有容器在同一个网络里，互相用容器名访问
+# FastAPI 里连 MySQL 写 host="yyw_mysql" 而不是 "localhost"
+networks:
+  yyw_net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
+  es_data:

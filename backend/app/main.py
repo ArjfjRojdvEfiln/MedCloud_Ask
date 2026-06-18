@@ -2,8 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
 from app.core.config import settings
-from app.api.v1 import auth
-from app.models import organization, user
+from app.api.v1 import auth,organizations
+from app.models import organization, user, knowledge, conversation, appointment, article
 
 app = FastAPI(
     title="医云问 API",
@@ -32,3 +32,10 @@ async def health():
 async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+app.include_router(
+    organizations.router,
+    prefix="/api/v1/organizations",
+    tags=["机构管理"]
+)

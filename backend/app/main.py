@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.core.database import engine, Base
 from app.core.config import settings
 from app.api.v1 import auth
+from app.models import organization, user
 
 app = FastAPI(
     title="医云问 API",
@@ -25,3 +26,9 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["认证"])
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+# 加一个启动事件
+@app.on_event("startup")
+async def startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token
+from app.core.bloom_filter import org_bloom
 from app.models.organization import Organization
 from app.models.user import User
 from app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse
@@ -39,6 +40,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     )
     db.add(user)
     # get_db() 会在请求结束时自动 commit
+    await org_bloom.add(org.slug)
 
     return {"msg": "注册成功", "org_id": org.id}
 

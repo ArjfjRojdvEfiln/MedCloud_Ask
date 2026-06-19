@@ -3,8 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from app.core.database import get_db
 from app.core.deps import get_current_user
+from app.core.redis_client import redis_client
 from app.models.user import User
 from app.models.organization import Organization
+
 
 router = APIRouter()
 
@@ -34,10 +36,13 @@ async def update_my_org(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """更新机构名称"""
     org = await db.get(Organization, current_user.organization_id)
     if not org:
         raise HTTPException(status_code=404, detail="机构不存在")
     org.name = body.name
-    # get_db() 自动 commit
+    await db.commit()   # 先落库
+    # 库改成功了，再清缓存——顺序不能反
+    cache_key = f"org:slug:{org.slug}"
+    await redis_client.delete(cache_key)
+    print(f"[cache] 主动清除：{cache_key}")
     return {"msg": "更新成功", "name": org.name}

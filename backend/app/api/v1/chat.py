@@ -8,6 +8,7 @@ from app.models.organization import Organization
 from app.models.conversation import Conversation, Message
 from app.services.dify_service import dify_service
 import re
+from typing import Optional
 
 router = APIRouter()
 
@@ -16,7 +17,7 @@ class ChatRequest(BaseModel):
     session_id: str       # 前端生成的 UUID，标识这个患者
     org_slug: str         # 机构标识，用于租户隔离
     question: str         # 患者的问题
-    conversation_id: str = None  # 多轮对话时传上一次的 dify_conversation_id
+    conversation_id: Optional[str] = None  # 多轮对话时传上一次的 dify_conversation_id
 
 
 @router.post("/messages")

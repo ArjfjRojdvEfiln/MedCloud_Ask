@@ -3,7 +3,7 @@ from sqlalchemy import select
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base,AsyncSessionLocal
 from app.core.config import settings
-from app.api.v1 import auth,organizations,public
+from app.api.v1 import auth,organizations,public,knowledge as knowledge_api,chat,appointments
 from app.models.organization import Organization
 from app.models import user, knowledge, conversation, appointment, article
 from app.core.redis_client import redis_client
@@ -26,6 +26,24 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["认证"])
 app.include_router(public.router, prefix="/api/v1/public", tags=["患者端公开接口"])
+app.include_router(
+    knowledge_api.router,
+    prefix="/api/v1/knowledge",
+    tags=["知识库管理"]
+)
+
+app.include_router(
+    chat.router,
+    prefix="/api/v1/chat",
+    tags=["对话"]
+)
+
+
+app.include_router(
+    appointments.router,
+    prefix="/api/v1/appointments",
+    tags=["预约管理"]
+)
 
 
 @app.get("/health")

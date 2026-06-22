@@ -16,9 +16,12 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 10080
     # 环境
     app_env: str = "development"
-
+    # Dify
+    dify_api_base: str = "https://api.dify.ai/v1"
+    dify_api_key: str = ""
+    dify_dataset_id: str = ""
+    dify_dataset_api_key: str = ""  # 加这行
     model_config = SettingsConfigDict(
-        # 往上找两层才到根目录的 .env
         env_file="../.env",
         env_file_encoding="utf-8",
         case_sensitive=False,
@@ -26,5 +29,4 @@ class Settings(BaseSettings):
     )
 
 
-# 全局单例，别的文件 from app.core.config import settings 就能用
 settings = Settings()

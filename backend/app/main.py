@@ -3,7 +3,7 @@ from sqlalchemy import select
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base,AsyncSessionLocal
 from app.core.config import settings
-from app.api.v1 import auth,organizations,public,knowledge as knowledge_api,chat,appointments
+from app.api.v1 import auth,organizations,public,knowledge as knowledge_api,chat,appointments,articles as articles_api
 from app.models.organization import Organization
 from app.models import user, knowledge, conversation, appointment, article
 from app.core.redis_client import redis_client
@@ -36,6 +36,13 @@ app.include_router(
     chat.router,
     prefix="/api/v1/chat",
     tags=["对话"]
+)
+
+
+app.include_router(
+    articles_api.router,
+    prefix="/api/v1/articles",
+    tags=["文章管理"]
 )
 
 

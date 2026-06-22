@@ -63,3 +63,4 @@ class Appointment(Base, TimestampMixin):
     department: Mapped["Department"] = relationship(
         "Department", back_populates="appointments"
     )
+    time_slot: Mapped["TimeSlot"] = relationship("TimeSlot")

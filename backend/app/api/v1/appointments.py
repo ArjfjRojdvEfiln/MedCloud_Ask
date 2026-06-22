@@ -1,10 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from pydantic import BaseModel
+from typing import Optional
 import redis.asyncio as redis
 from app.core.database import get_db
 from app.core.redis_client import get_redis
+from app.core.deps import get_current_user
+from app.models.user import User
 from app.models.appointment import TimeSlot, Appointment
 
 router = APIRouter()
@@ -76,3 +80,83 @@ async def create_appointment(
     finally:
         # ── 无论成功失败，都释放分布式锁 ──────────────
         await rc.delete(lock_key)
+
+
+@router.get("/")
+async def list_appointments(
+    status: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    预约列表——organization_id 从 JWT 取，防水平越权
+    支持 ?status=pending/confirmed/cancelled 过滤
+    """
+    stmt = (
+        select(Appointment)
+        .options(
+            joinedload(Appointment.department),
+            joinedload(Appointment.time_slot),
+        )
+        .where(Appointment.organization_id == current_user.organization_id)
+        .order_by(Appointment.created_at.desc())
+    )
+
+    if status:
+        stmt = stmt.where(Appointment.status == status)
+
+    result = await db.execute(stmt)
+    appointments = result.scalars().all()
+
+    return [
+        {
+            "id": a.id,
+            "patient_name": a.patient_name,
+            "patient_phone": a.patient_phone,
+            "department_name": a.department.name,
+            "slot_date": str(a.time_slot.date),
+            "slot_time": f"{a.time_slot.start_time}-{a.time_slot.end_time}",
+            "status": a.status,
+            "created_at": a.created_at.isoformat(),
+        }
+        for a in appointments
+    ]
+
+
+class AppointmentStatusUpdate(BaseModel):
+    status: str  # confirmed 或 cancelled
+
+
+@router.patch("/{appointment_id}")
+async def update_appointment_status(
+    appointment_id: int,
+    body: AppointmentStatusUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    确认或取消预约
+    - 同样用 organization_id 做权限校验，不能操作别家机构的预约
+    - 取消时自动释放号源（remaining + 1）
+    """
+    # 1. 查预约，同时校验归属
+    appt = await db.get(Appointment, appointment_id)
+    if not appt:
+        raise HTTPException(status_code=404, detail="预约不存在")
+    if appt.organization_id != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="无权操作")
+
+    # 2. 校验状态流转是否合法（只有 pending 才能被操作）
+    if appt.status != "pending":
+        raise HTTPException(status_code=400, detail=f"当前状态 {appt.status} 不可修改")
+
+    # 3. 取消时释放号源
+    if body.status == "cancelled":
+        slot = await db.get(TimeSlot, appt.time_slot_id)
+        if slot:
+            slot.remaining += 1  # 号源归还
+
+    appt.status = body.status
+    await db.commit()
+
+    return {"msg": "操作成功", "status": appt.status}

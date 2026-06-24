@@ -6,6 +6,7 @@ from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.knowledge import KnowledgeBase, KnowledgeDocument
 from app.services.dify_service import dify_service
+from app.services.oss_service import oss_service
 
 router = APIRouter()
 
@@ -64,7 +65,17 @@ async def upload_document(
     # 3. Get or Create 知识库记录
     kb = await get_or_create_knowledge_base(db, current_user.organization_id)
 
-    # 4. 转发给 Dify
+    # 4. 上传到阿里云 OSS，拿到真实 URL
+    try:
+        oss_url = oss_service.upload_file(
+            filename=file.filename,
+            file_content=file_content,
+            content_type=file.content_type,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"OSS 上传失败：{str(e)}")
+
+    # 5. 转发给 Dify
     try:
         dify_result = await dify_service.upload_document(
             filename=file.filename,
@@ -74,12 +85,12 @@ async def upload_document(
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Dify 服务异常：{str(e)}")
 
-    # 5. 把文档记录写入 knowledge_documents 表
+    # 6. 把文档记录写入 knowledge_documents 表
     doc = KnowledgeDocument(
         knowledge_base_id=kb.id,
         filename=file.filename,
-        oss_url="",   # 文档存在 Dify，这里留空或存 dify 的 document_id
-        status="processing",  # Dify 还在向量化，先标 processing
+        oss_url=oss_url,  # ← 从空字符串改为真实 OSS URL
+        status="processing",
     )
     db.add(doc)
     # get_db() 会自动 commit，不需要手动写

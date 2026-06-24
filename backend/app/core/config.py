@@ -18,6 +18,14 @@ class Settings(BaseSettings):
     wechat_app_id: str = ""
     wechat_app_secret: str = ""
     wechat_redirect_uri: str = ""
+
+    # 阿里云 OSS
+    oss_access_key_id: str = ""
+    oss_access_key_secret: str = ""
+    oss_bucket_name: str = ""
+    oss_endpoint: str = ""
+
+    
     # 环境
     app_env: str = "development"
     # Dify

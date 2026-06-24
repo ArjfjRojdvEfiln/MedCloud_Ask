@@ -5,9 +5,10 @@ from app.core.database import engine, Base,AsyncSessionLocal
 from app.core.config import settings
 from app.api.v1 import auth,organizations,public,knowledge as knowledge_api,chat,appointments,articles as articles_api
 from app.models.organization import Organization
-from app.models import user, knowledge, conversation, appointment, article
+from app.models import user, knowledge, conversation, appointment, article,patient
 from app.core.redis_client import redis_client
 from app.core.bloom_filter import org_bloom
+from app.api.v1 import patient_auth
 
 app = FastAPI(
     title="医云问 API",
@@ -50,6 +51,12 @@ app.include_router(
     appointments.router,
     prefix="/api/v1/appointments",
     tags=["预约管理"]
+)
+
+app.include_router(
+    patient_auth.router,
+    prefix="/api/v1/patient",
+    tags=["患者端认证"]
 )
 
 

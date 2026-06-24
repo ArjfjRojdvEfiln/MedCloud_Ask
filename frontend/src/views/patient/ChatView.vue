@@ -11,9 +11,23 @@
           </div>
         </div>
       </div>
-      <el-button size="small" @click="goAppointment" style="border-color: #1D9E75; color: #1D9E75">
-        立即预约
-      </el-button>
+      <div class="header-right">
+        <!-- 已登录：显示患者信息 -->
+        <template v-if="patientAuth.isLoggedIn()">
+          <span class="user-info">
+            <span class="user-icon">👤</span>
+            {{ patientAuth.name || patientAuth.phone || '已登录' }}
+          </span>
+          <el-button size="small" text @click="patientAuth.logout()">退出</el-button>
+        </template>
+        <!-- 未登录：显示登录按钮 -->
+        <el-button v-else size="small" @click="goLogin" style="border-color: #1D9E75; color: #1D9E75">
+          登录
+        </el-button>
+        <el-button size="small" @click="goAppointment" style="border-color: #1D9E75; color: #1D9E75">
+          立即预约
+        </el-button>
+      </div>
     </div>
 
     <!-- 消息区 -->
@@ -85,9 +99,11 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { usePatientAuthStore } from '@/stores/patientAuth'
 
 const route = useRoute()
 const router = useRouter()
+const patientAuth = usePatientAuthStore()
 
 // 从 URL 参数获取机构 slug，如 /chat?org=beijing-smile
 const orgSlug = (route.query.org as string) || 'demo'
@@ -130,6 +146,10 @@ function filterThink(content: string): string {
   // 再去掉还没关闭的 <think>...（流式未结束时）
   result = result.replace(/<think>[\s\S]*/g, '')
   return result.trim()
+}
+
+function goLogin() {
+  router.push(`/patient/login?org=${orgSlug}&redirect=${encodeURIComponent(route.fullPath)}`)
 }
 
 function goAppointment() {
@@ -231,6 +251,9 @@ function scrollToBottom() {
 }
 
 onMounted(() => {
+  // 微信登录回调：URL 带 token 参数时自动解析并登录
+  patientAuth.handleCallback()
+
   // 可以根据 orgSlug 从后端获取机构名
   if (orgSlug !== 'demo') {
     fetch(`http://localhost:8000/api/v1/public/orgs/${orgSlug}`)
@@ -262,6 +285,12 @@ onMounted(() => {
 }
 
 .header-left { display: flex; align-items: center; gap: 12px; }
+
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+.user-info { font-size: 13px; color: #606266; display: flex; align-items: center; gap: 4px; }
+
+.user-icon { font-size: 16px; }
 
 .avatar {
   width: 40px;

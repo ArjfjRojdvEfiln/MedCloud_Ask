@@ -131,17 +131,10 @@ function statusType(status: string) {
 async function loadAppointments() {
   loading.value = true
   try {
-    const res = await request.get(
-      `/api/v1/appointments/?org_id=${authStore.orgId}`
-    ) as any
+    const res = await request.get('/api/v1/appointments/') as any
     appointments.value = res || []
   } catch {
-    // 接口还没实现时显示演示数据
-    appointments.value = [
-      { id: 1, patient_name: '张三', patient_phone: '138****0001', department_name: '口腔科', slot_date: '2026-06-23', slot_time: '09:00-09:30', status: 'pending' },
-      { id: 2, patient_name: '李四', patient_phone: '139****0002', department_name: '体检科', slot_date: '2026-06-23', slot_time: '10:00-10:30', status: 'confirmed' },
-      { id: 3, patient_name: '王五', patient_phone: '137****0003', department_name: '口腔科', slot_date: '2026-06-22', slot_time: '14:00-14:30', status: 'cancelled' },
-    ]
+    appointments.value = []
   } finally {
     loading.value = false
   }
@@ -153,14 +146,9 @@ async function handleConfirm(row: Appointment) {
     cancelButtonText: '取消',
     type: 'warning',
   })
-  try {
-    await request.patch(`/api/v1/appointments/${row.id}`, { status: 'confirmed' })
-    row.status = 'confirmed'
-    ElMessage.success('已确认')
-  } catch {
-    row.status = 'confirmed'  // 接口未实现时本地更新
-    ElMessage.success('已确认')
-  }
+  await request.patch(`/api/v1/appointments/${row.id}`, { status: 'confirmed' })
+  row.status = 'confirmed'
+  ElMessage.success('已确认')
 }
 
 async function handleCancel(row: Appointment) {
@@ -169,14 +157,9 @@ async function handleCancel(row: Appointment) {
     cancelButtonText: '返回',
     type: 'warning',
   })
-  try {
-    await request.patch(`/api/v1/appointments/${row.id}`, { status: 'cancelled' })
-    row.status = 'cancelled'
-    ElMessage.success('已取消')
-  } catch {
-    row.status = 'cancelled'
-    ElMessage.success('已取消')
-  }
+  await request.patch(`/api/v1/appointments/${row.id}`, { status: 'cancelled' })
+  row.status = 'cancelled'
+  ElMessage.success('已取消')
 }
 
 onMounted(loadAppointments)

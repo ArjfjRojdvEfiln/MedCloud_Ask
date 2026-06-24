@@ -36,6 +36,10 @@ const router = createRouter({
       ],
     },
     {
+      path: '/patient/login',
+      component: () => import('@/views/patient/PatientLoginView.vue'),
+    },
+    {
       path: '/patient/chat',
       component: () => import('@/views/patient/ChatView.vue'),
     },

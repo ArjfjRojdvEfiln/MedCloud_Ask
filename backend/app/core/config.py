@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 10080
+    # 微信开放平台 OAuth2
+    wechat_app_id: str = ""
+    wechat_app_secret: str = ""
+    wechat_redirect_uri: str = ""
     # 环境
     app_env: str = "development"
     # Dify

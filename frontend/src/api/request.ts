@@ -2,7 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 const request = axios.create({
-  baseURL: 'https://4a382f9.r7.cpolar.top',  // 后端地址
+  baseURL: 'http://116.62.207.236:8001',  // 后端地址
   timeout: 30000,
 })
 

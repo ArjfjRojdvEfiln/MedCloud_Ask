@@ -8,7 +8,7 @@ from app.models.organization import Organization
 from app.models import user, knowledge, conversation, appointment, article,patient
 from app.core.redis_client import redis_client
 from app.core.bloom_filter import org_bloom
-from app.api.v1 import patient_auth
+from app.api.v1 import patient_auth,pay
 
 app = FastAPI(
     title="医云问 API",
@@ -57,6 +57,11 @@ app.include_router(
     patient_auth.router,
     prefix="/api/v1/patient",
     tags=["患者端认证"]
+)
+
+
+app.include_router(
+    pay.router, prefix="/api/v1/pay", tags=["支付"]
 )
 
 

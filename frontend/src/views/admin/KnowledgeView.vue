@@ -69,7 +69,7 @@
     <!-- 上传提示 -->
     <div class="tip-card">
       <el-icon color="#1D9E75"><InfoFilled /></el-icon>
-      <span>支持 PDF、TXT、DOCX 格式，单文件不超过 15MB。上传后 Dify 将自动解析并建立向量索引，处理完成后状态变为"已就绪"。</span>
+      <span>支持 PDF、TXT、DOCX 格式，单文件不超过 15MB。上传后 Dify 将自动解析并建立向量索引。</span>
     </div>
   </div>
 </template>

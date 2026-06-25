@@ -25,7 +25,10 @@ class Settings(BaseSettings):
     oss_bucket_name: str = ""
     oss_endpoint: str = ""
 
-    
+    # 阿里云 SMS
+    sms_sign_name: str = "阿里云短信测试"
+    sms_template_code: str = "SMS_154950909"
+
     # 环境
     app_env: str = "development"
     # Dify

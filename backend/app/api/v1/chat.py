@@ -64,26 +64,28 @@ async def chat(
 
     # 4. 流式生成器：透传 Dify 响应，同时拼接完整回答
     full_answer = []
+    dify_conv_id_holder = []  # 用列表作为可变容器，在闭包内赋值
 
     async def generate():
+        import json
         async for chunk in dify_service.chat_stream(
             question=body.question,
             conversation_id=body.conversation_id,
         ):
-            # 拼接完整回答（用于存库）
-            if '"answer":' in chunk:
-                import json
+            if chunk.startswith("data: "):
                 try:
-                    data_str = chunk.replace("data: ", "").strip()
-                    data = json.loads(data_str)
+                    data = json.loads(chunk[6:].strip())
                     if data.get("event") == "message":
                         full_answer.append(data.get("answer", ""))
+                    elif data.get("event") == "message_end":
+                        cid = data.get("conversation_id")
+                        if cid:
+                            dify_conv_id_holder.append(cid)
                 except Exception:
                     pass
             yield chunk
 
-        # 5. 流结束后，把 AI 回答存 MySQL
-        # 5. 流结束后，把 AI 回答存 MySQL，并发消息到 RabbitMQ → ES
+        # 5. 流结束后，把 AI 回答存 MySQL，并更新 dify_conversation_id
         if full_answer:
             ai_content = "".join(full_answer)
             ai_content = re.sub(r'<think>.*?</think>', '', ai_content, flags=re.DOTALL).strip()
@@ -94,6 +96,10 @@ async def chat(
                     content=ai_content,
                 )
                 db.add(ai_msg)
+                # 把 Dify 返回的 conversation_id 持久化，保证重启后多轮对话可续
+                if dify_conv_id_holder and not conv.dify_conversation_id:
+                    conv.dify_conversation_id = dify_conv_id_holder[0]
+                    db.add(conv)
 
             # 发到 RabbitMQ，异步写 ES
             from app.core.rabbitmq import publish_message

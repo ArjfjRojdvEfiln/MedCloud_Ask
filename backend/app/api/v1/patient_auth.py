@@ -10,6 +10,7 @@ from app.core.redis_client import redis_client
 from app.core.security import create_access_token
 from app.core.config import settings
 from app.models.patient import Patient
+from app.services.sms_service import generate_code
 
 router = APIRouter()
 
@@ -206,14 +207,12 @@ async def wechat_mock_login(
 # ── 发送验证码 ────────────────────────────────────────
 @router.post("/send-code")
 async def send_code(body: SendCodeRequest):
-    # demo阶段：验证码固定 123456，不真实发短信
-    code = "123456"
+    code = generate_code()
     key = f"sms:{body.phone}:{body.institution_id}"
-    # 存 Redis，5分钟过期
     await redis_client.set(key, code, ex=300)
-    print(f"[SMS] 验证码已生成：{key} = {code}")
+    # 演示阶段：控制台打印验证码，生产环境替换为真实短信
+    print(f"[SMS] 手机号: {body.phone} 验证码: {code}")
     return {"msg": "验证码已发送"}
-
 
 # ── 验证码登录 ────────────────────────────────────────
 @router.post("/login", response_model=PatientTokenResponse)

@@ -133,10 +133,18 @@
         </div>
 
         <el-button
-          size="large"
-          style="width:100%; margin-top: 24px"
-          @click="router.push(`/patient/chat?org=${orgSlug}`)"
-        >返回咨询页</el-button>
+  type="primary"
+  size="large"
+  style="width:100%; margin-top: 24px; background: #1D9E75; border-color: #1D9E75"
+  :loading="paying"
+  @click="handlePay"
+>去支付（¥9.99）</el-button>
+
+<el-button
+  size="large"
+  style="width:100%; margin-top: 12px"
+  @click="router.push(`/patient/chat?org=${orgSlug}`)"
+>返回咨询页</el-button>
       </div>
     </div>
   </div>
@@ -153,6 +161,8 @@ const router = useRouter()
 const orgSlug = (route.query.org as string) || 'demo'
 const step = ref(0)
 const submitting = ref(false)
+const appointmentId = ref<number | null>(null)
+const paying = ref(false)
 
 interface Dept { id: number; name: string; icon: string }
 interface Slot { id: number; date: string; start_time: string; end_time: string; remaining: number }
@@ -185,18 +195,36 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    await request.post('/api/v1/appointments/', {
+    const res = await request.post('/api/v1/appointments/', {
       time_slot_id: selectedSlot.value!.id,
       patient_name: form.patient_name,
       patient_phone: form.patient_phone,
       organization_id: 1,
     })
+    appointmentId.value = res.data.appointment_id  // 保存预约ID，支付时用
     step.value = 3
   } catch {
-    // 接口有问题时本地模拟成功，演示用
+    // 演示降级：接口失败时用一个假ID
+    appointmentId.value = 1
     step.value = 3
   } finally {
     submitting.value = false
+  }
+}
+
+async function handlePay() {
+  paying.value = true
+  try {
+    const res = await request.post('/api/v1/pay/create', {
+      appointment_id: appointmentId.value,
+      amount: 99.00,
+    })
+    // 跳转到支付宝收银台（在当前页跳转）
+    window.location.href = res.data.pay_url
+  } catch (e) {
+    ElMessage.error('获取支付链接失败，请重试')
+  } finally {
+    paying.value = false
   }
 }
 

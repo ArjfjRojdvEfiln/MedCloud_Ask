@@ -36,9 +36,9 @@ def _sign(params: dict) -> str:
 
     # 2. 加载私钥（PKCS8 格式，需要包裹 header）
     private_key_str = (
-        "-----BEGIN PRIVATE KEY-----\n"
-        + settings.alipay_app_private_key
-        + "\n-----END PRIVATE KEY-----"
+            "-----BEGIN RSA PRIVATE KEY-----\n"
+            + settings.alipay_app_private_key
+            + "\n-----END RSA PRIVATE KEY-----"
     )
     key = RSA.importKey(private_key_str)
 

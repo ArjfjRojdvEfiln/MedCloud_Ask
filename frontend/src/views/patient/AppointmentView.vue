@@ -201,7 +201,8 @@ async function handleSubmit() {
       patient_phone: form.patient_phone,
       organization_id: 1,
     })
-    appointmentId.value = res.data.appointment_id  // 保存预约ID，支付时用
+    // 保存预约ID，支付时用
+    appointmentId.value = (res as any).appointment_id
     step.value = 3
   } catch {
     // 演示降级：接口失败时用一个假ID
@@ -220,7 +221,7 @@ async function handlePay() {
       amount: 99.00,
     })
     // 跳转到支付宝收银台（在当前页跳转）
-    window.location.href = res.data.pay_url
+    window.location.href = (res as any).pay_url
   } catch (e) {
     ElMessage.error('获取支付链接失败，请重试')
   } finally {

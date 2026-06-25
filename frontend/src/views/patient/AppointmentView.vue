@@ -218,7 +218,7 @@ async function handlePay() {
   try {
     const res = await request.post('/api/v1/pay/create', {
       appointment_id: appointmentId.value,
-      amount: 99.00,
+      amount: 9.99,
     })
     // 跳转到支付宝收银台（在当前页跳转）
     window.location.href = (res as any).pay_url

@@ -108,7 +108,7 @@ def build_pay_url(appointment_id: int, amount: float) -> str:
 
 class PayCreateRequest(BaseModel):
     appointment_id: int
-    amount: float = 99.00
+    amount: float = 9.99
 
 
 @router.post("/create")

@@ -40,7 +40,7 @@ def _sign(params: dict) -> str:
         + settings.alipay_app_private_key
         + "\n-----END PRIVATE KEY-----"
     )
-    key = RSA.import_key(private_key_str)
+    key = RSA.importKey(private_key_str)
 
     # 3. SHA256withRSA 签名
     h = SHA256.new(sign_str.encode("utf-8"))
@@ -60,7 +60,7 @@ def _verify(params: dict, signature: str) -> bool:
             + settings.alipay_public_key
             + "\n-----END PUBLIC KEY-----"
         )
-        key = RSA.import_key(public_key_str)
+        key = RSA.importKey(public_key_str)
 
         sorted_params = sorted(params.items())
         sign_str = "&".join(f"{k}={v}" for k, v in sorted_params)

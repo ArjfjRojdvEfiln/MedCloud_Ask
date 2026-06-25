@@ -201,11 +201,11 @@ async function handleSubmit() {
       patient_phone: form.patient_phone,
       organization_id: 1,
     })
-    // 保存预约ID，支付时用
     appointmentId.value = (res as any).appointment_id
+    console.log('预约成功，ID:', appointmentId.value)  // 加这行
     step.value = 3
-  } catch {
-    // 演示降级：接口失败时用一个假ID
+  } catch (e) {
+    console.error('预约失败:', e)  // 改这行
     appointmentId.value = 1
     step.value = 3
   } finally {

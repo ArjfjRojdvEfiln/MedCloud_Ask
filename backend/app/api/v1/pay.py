@@ -18,9 +18,9 @@ from app.models.appointment import Appointment
 router = APIRouter()
 
 ALIPAY_GATEWAY = "https://openapi-sandbox.dl.alipaydev.com/gateway.do"
-SERVER_BASE = "http://116.62.207.236"
-NOTIFY_URL = f"{SERVER_BASE}:8001/api/v1/pay/notify"
-RETURN_URL = f"{SERVER_BASE}/patient/appointment?pay=success"
+SERVER_BASE = "http://localhost"
+NOTIFY_URL = f"http://localhost:8001/api/v1/pay/notify"
+RETURN_URL = f"http://localhost:5173/patient/appointment?pay=success"
 
 
 def _sign(params: dict) -> str:

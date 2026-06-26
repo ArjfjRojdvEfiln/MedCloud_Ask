@@ -178,7 +178,7 @@ async function sendMessage() {
   const aiMsg: Message = { id: Date.now() + 1, role: 'assistant', content: '', streaming: true }
 
   try {
-    const response = await fetch('http://localhost:8000/api/v1/chat/messages', {
+    const response = await fetch('http://localhost:8001/api/v1/chat/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -256,7 +256,7 @@ onMounted(() => {
 
   // 可以根据 orgSlug 从后端获取机构名
   if (orgSlug !== 'demo') {
-    fetch(`http://localhost:8000/api/v1/public/orgs/${orgSlug}`)
+    fetch(`http://localhost:8001/api/v1/public/orgs/${orgSlug}`)
       .then(r => r.json())
       .then(d => { if (d.name) orgName.value = d.name })
       .catch(() => {})
